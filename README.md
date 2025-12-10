@@ -35,25 +35,6 @@ npm run cli -- daily-summary
 npm install
 npm run start:all
 ````
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Running the Project (Without Docker)](#running-the-project-without-docker)
-- [Running the Project (With Docker Compose)](#running-the-project-with-docker-compose)
-- [CLI Usage](#cli-usage)
-- [API Documentation (Swagger)](#api-documentation-swagger)
-- [Environment Variables](#environment-variables)
-- [Database](#database)
-- [Development Notes](#development-notes)
-- [Possible Extensions](#possible-extensions)
-
----
-
 ## Overview
 
 The goal of this project is to demonstrate a **service-oriented architecture** using a realistic but compact scenario:
