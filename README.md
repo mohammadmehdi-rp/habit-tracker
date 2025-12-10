@@ -7,6 +7,34 @@ Course: **Service Design and Engineering (SDE)**
 
 ---
 
+## 🔰 Quick Command Cheat Sheet
+
+### Docker (recommended for demo)
+
+From project root:
+
+````bash
+# Build and start all services + CLI container
+docker compose up --build
+
+# Stop containers
+docker compose down
+
+# Open a shell in CLI container
+docker exec -it habit-cli sh
+
+# Inside CLI container: main commands
+npm run cli -- register alice pass123
+npm run cli -- login alice pass123
+npm run cli -- add-habit "Study 1 hour" daily
+npm run cli -- list-habits
+npm run cli -- complete-habit 1
+npm run cli -- daily-summary
+
+# Or Start Locally 
+npm install
+npm run start:all
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -134,3 +162,4 @@ Approximate folder layout:
 ├─ docker-compose.yml
 ├─ package.json
 └─ README.md
+````
