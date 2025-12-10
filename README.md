@@ -5,9 +5,7 @@ Service-Oriented Architecture (SOA) project implementing a small but complete mu
 Author: **Mohammadmehdi Rajabpourshirazy**  
 Course: **Service Design and Engineering (SDE)**
 
----
-
-## 🔰 Quick Command Cheat Sheet
+## Quick Command Cheat Sheet
 
 ### Docker (recommended for demo)
 
@@ -30,10 +28,13 @@ npm run cli -- add-habit "Study 1 hour" daily
 npm run cli -- list-habits
 npm run cli -- complete-habit 1
 npm run cli -- daily-summary
+````
 
-# Or Start Locally 
+### Or Start Locally 
+````bash
 npm install
 npm run start:all
+````
 
 ## Table of Contents
 
