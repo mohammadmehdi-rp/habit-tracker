@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  auth:
+    build: .
+    container_name: auth-service
+    command: ["node", "services/auth-service/index.js"]
+    ports:
+      - "4001:4001"
+    volumes:
+      - habit-db:/app/db
+
+  habit-data:
+    build: .
+    container_name: habit-data-service
+    command: ["node", "services/habit-data-service/index.js"]
+    ports:
+      - "4002:4002"
+    volumes:
+      - habit-db:/app/db
+
+  stats:
+    build: .
+    container_name: habit-stats-service
+    command: ["node", "services/habit-stats-service/index.js"]
+    ports:
+      - "4004:4004"
+    environment:
+      - HABIT_DATA_URL=http://habit-data:4002
+
+  quote:
+    build: .
+    container_name: quote-adapter-service
+    command: ["node", "services/quote-adapter-service/index.js"]
+    ports:
+      - "4003:4003"
+
+  gateway:
+    build: .
+    container_name: gateway-service
+    command: ["node", "services/gateway-service/index.js"]
+    ports:
+      - "4000:4000"
+    environment:
+      - AUTH_URL=http://auth:4001
+      - HABIT_DATA_URL=http://habit-data:4002
+      - STATS_URL=http://stats:4004
+      - QUOTE_URL=http://quote:4003
+    depends_on:
+      - auth
+      - habit-data
+      - stats
+      - quote
+    volumes:
+      - habit-db:/app/db
+
+  cli:
+    build: .
+    container_name: habit-cli
+    command: ["sleep", "999999"]   # keep CLI container alive
+    depends_on:
+      - gateway
+    environment:
+      - AUTH_URL=http://auth:4001
+      - GATEWAY_URL=http://gateway:4000
+    volumes:
+      - habit-db:/app/db
+
+volumes:
+  habit-db:

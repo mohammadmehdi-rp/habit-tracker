@@ -1,0 +1,578 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Habit Tracker + Motivational Quotes - Service Oriented API",
+    "version": "1.0.0",
+    "description": "API documentation for Auth, Habit Data, Stats, Quote Adapter, and Gateway services."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Gateway Service"
+    },
+    {
+      "url": "http://localhost:4001",
+      "description": "Auth Service"
+    },
+    {
+      "url": "http://localhost:4002",
+      "description": "Habit Data Service"
+    },
+    {
+      "url": "http://localhost:4003",
+      "description": "Quote Adapter Service"
+    },
+    {
+      "url": "http://localhost:4004",
+      "description": "Habit Stats Service"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Gateway",
+      "description": "Process-centric endpoints used by CLI"
+    },
+    { "name": "Auth", "description": "User registration and authentication" },
+    { "name": "Habits", "description": "Habit and habit log management" },
+    { "name": "Stats", "description": "Habit statistics and summaries" },
+    { "name": "Quotes", "description": "Motivational quotes from external API" }
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "description": "Create a new user account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string", "example": "alice" },
+                  "password": { "type": "string", "example": "password123" }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "400": { "description": "Username already exists or invalid body" }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "description": "Authenticate a user and retrieve an access token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "userId": { "type": "integer" },
+                    "username": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/verify-token": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Verify token",
+        "description": "Verify a Bearer token and return the associated user ID.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Token as query parameter (alternative to Authorization header)",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "userId": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid token" }
+        }
+      }
+    },
+    "/habits": {
+      "get": {
+        "tags": ["Habits"],
+        "summary": "List habits for a user",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of habits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Habit" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Habits"],
+        "summary": "Create a habit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": { "type": "integer" },
+                  "name": { "type": "string", "example": "Study 1 hour" },
+                  "frequency": { "type": "string", "example": "daily" }
+                },
+                "required": ["userId", "name", "frequency"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Habit created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Habit" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/habits/{id}/completions": {
+      "post": {
+        "tags": ["Habits"],
+        "summary": "Mark habit completed for a given date",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2025-12-10"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Completion stored",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HabitLog" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/habit-logs": {
+      "get": {
+        "tags": ["Habits"],
+        "summary": "Get habit logs for a user and date range",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of habit logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/HabitLogWithName" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/daily-summary": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get daily summary (Stats Service or Gateway, depending on selected server)",
+        "description": "Returns daily completion summary and, in the Gateway, is combined with a motivational quote.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily summary (Stats service) or summary+quote (Gateway)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/DailySummary" },
+                    { "$ref": "#/components/schemas/DailySummaryWithQuote" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/streaks": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get streaks for each habit",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streaks per habit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": { "type": "string", "format": "date" },
+                    "streaks": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Streak" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quote": {
+      "get": {
+        "tags": ["Quotes"],
+        "summary": "Get a motivational quote",
+        "description": "Returns a motivational quote fetched from ZenQuotes.io.",
+        "responses": {
+          "200": {
+            "description": "Quote result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Quote" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/add-habit": {
+      "post": {
+        "tags": ["Gateway"],
+        "summary": "Add habit (Gateway)",
+        "description": "Process-centric endpoint that verifies token (Auth) and creates a habit (Habit Data).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Bearer token"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "frequency": { "type": "string", "example": "daily" }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Habit created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Habit" }
+              }
+            }
+          },
+          "401": { "description": "Invalid or missing token" }
+        }
+      }
+    },
+    "/list-habits": {
+      "get": {
+        "tags": ["Gateway"],
+        "summary": "List habits (Gateway)",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of habits for the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Habit" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid or missing token" }
+        }
+      }
+    },
+    "/complete-habit": {
+      "post": {
+        "tags": ["Gateway"],
+        "summary": "Complete habit (Gateway)",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "habitId": { "type": "integer" },
+                  "date": { "type": "string", "format": "date" }
+                },
+                "required": ["habitId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Completion stored",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HabitLog" }
+              }
+            }
+          },
+          "401": { "description": "Invalid or missing token" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Habit": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "name": { "type": "string" },
+          "frequency": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "HabitLog": {
+        "type": "object",
+        "properties": {
+          "habitId": { "type": "integer" },
+          "date": { "type": "string", "format": "date" },
+          "completed": { "type": "integer", "example": 1 }
+        }
+      },
+      "HabitLogWithName": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "habit_id": { "type": "integer" },
+          "date": { "type": "string", "format": "date" },
+          "completed": { "type": "integer" },
+          "user_id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "Streak": {
+        "type": "object",
+        "properties": {
+          "habitId": { "type": "integer" },
+          "habitName": { "type": "string" },
+          "streak": { "type": "integer" }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "author": { "type": "string" }
+        }
+      },
+      "DailySummary": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "summary": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "habitId": { "type": "integer" },
+                "name": { "type": "string" },
+                "completed": { "type": "boolean" }
+              }
+            }
+          },
+          "completionRate": { "type": "integer", "example": 60 }
+        }
+      },
+      "DailySummaryWithQuote": {
+        "allOf": [
+          { "$ref": "#/components/schemas/DailySummary" },
+          {
+            "type": "object",
+            "properties": {
+              "quote": { "$ref": "#/components/schemas/Quote" }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
